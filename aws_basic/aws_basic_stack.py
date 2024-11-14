@@ -12,7 +12,7 @@ import aws_cdk.aws_ssm as ssm
 
 from constructs import Construct
 
-class AwsBasicStack(Stack):
+class AwsBasicStack(cdk.Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -20,7 +20,20 @@ class AwsBasicStack(Stack):
     # vpc
         vpcx = ec2.Vpc(self, "VPC",
             max_azs=3,
-            cidr="10.0.2.0/16"
+            ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/16"),
+            nat_gateways=0,
+            subnet_configuration=[
+                ec2.SubnetConfiguration(
+                    name="public",
+                    subnet_type=ec2.SubnetType.PUBLIC,
+                    cidr_mask=24
+                ),
+                ec2.SubnetConfiguration(
+                    name="private",
+                    subnet_type=ec2.SubnetType.PRIVATE_ISOLATED,
+                    cidr_mask=24
+                ),
+            ]
         )
         
         # sg
@@ -63,19 +76,29 @@ class AwsBasicStack(Stack):
         #######################user data############
         user_data = f'''
             #!/bin/bash      
-            sudo timedatectl set-timezone Europe/Copenhagen
-            sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a start
-            sudo yum update -y            
+            # sudo timedatectl set-timezone Europe/Copenhagen
+            # sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a start
+            # sudo yum update -y            
+            sudo adduser sran
+            sudo echo 'sran:Password@123' | sudo chpasswd
             rm /var/lib/cloud/instance/sem/config_scripts_user
             '''
+        # user_data = ec2.UserData.for_linux()
+        # user_data.add_commands(
+        #     "sudo adduser sran",
+        #     "echo 'sran:Password@123' | sudo chpasswd"
+        # )
+        
         instance = ec2.Instance(
             self,
             'BackupInstance',
-            instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3_AMD, ec2.InstanceSize.MICRO),
+            instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE4_GRAVITON, ec2.InstanceSize.MICRO),
             vpc=vpcx,
-            machine_image=ec2.MachineImage.latest_amazon_linux(
-                generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2
+            machine_image=ec2.MachineImage.latest_amazon_linux2(
+                cpu_type=ec2.AmazonLinuxCpuType.ARM_64,
+                edition=ec2.AmazonLinuxEdition.STANDARD,
             ),
+            credit_specification=ec2.CpuCredits.STANDARD,
             security_group=sg,
             role=role,
             user_data=ec2.UserData.custom(user_data),
@@ -102,6 +125,7 @@ class AwsBasicStack(Stack):
             ]
         )
         Tags.of(instance).add("shellscript", "automation")
+        # Tags.of(self).add("AppManagerCFNStackKey", "")
         
         
         
