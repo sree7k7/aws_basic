@@ -43,6 +43,13 @@ class AwsBasicStack(cdk.Stack):
             allow_all_outbound=True
         )
         
+        ## allow ssh
+        sg.add_ingress_rule(
+            ec2.Peer.any_ipv4(),
+            ec2.Port.tcp(22),
+            "Allow ssh access from the world"
+        )
+        
         role = iam.Role(
             self,
             "BackupRole",
@@ -94,7 +101,7 @@ class AwsBasicStack(cdk.Stack):
             'BackupInstance',
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE4_GRAVITON, ec2.InstanceSize.MICRO),
             vpc=vpcx,
-            machine_image=ec2.MachineImage.latest_amazon_linux2(
+            machine_image=ec2.MachineImage.latest_amazon_linux2023(
                 cpu_type=ec2.AmazonLinuxCpuType.ARM_64,
                 edition=ec2.AmazonLinuxEdition.STANDARD,
             ),
@@ -102,9 +109,9 @@ class AwsBasicStack(cdk.Stack):
             security_group=sg,
             role=role,
             user_data=ec2.UserData.custom(user_data),
-            # vpc_subnets=ec2.SubnetSelection(
-            #     subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
-            # ),
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PUBLIC
+            ),
             block_devices=[
                 ec2.BlockDevice(
                 device_name="/dev/xvda",
