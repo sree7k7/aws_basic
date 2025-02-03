@@ -96,6 +96,8 @@ class AwsBasicStack(cdk.Stack):
         #     "echo 'sran:Password@123' | sudo chpasswd"
         # )
         
+        ### Linux instance 1
+        
         instance = ec2.Instance(
             self,
             'BackupInstance',
@@ -131,8 +133,43 @@ class AwsBasicStack(cdk.Stack):
             # )                
             ]
         )
-        Tags.of(instance).add("shellscript", "automation")
+        Tags.of(instance).add("OS", "Linux")
         # Tags.of(self).add("AppManagerCFNStackKey", "")
         
         
-        
+        ## Linux instance 2
+        instance2 = ec2.Instance(
+            self,
+            'WindowsInstance',
+            instance_type=ec2.InstanceType.of(ec2.InstanceClass.T2, ec2.InstanceSize.MICRO),
+            vpc=vpcx,
+            machine_image=ec2.MachineImage.latest_windows(
+                version=ec2.WindowsVersion.WINDOWS_SERVER_2022_ENGLISH_FULL_BASE,
+            ),
+            credit_specification=ec2.CpuCredits.STANDARD,
+            security_group=sg,
+            role=role,
+            # user_data=ec2.UserData.custom(user_data),
+            vpc_subnets=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PUBLIC
+            ),
+            block_devices=[
+                ec2.BlockDevice(
+                device_name="/dev/xvda",
+                volume=ec2.BlockDeviceVolume.ebs(
+                    volume_size= 15,
+                    volume_type= ec2.EbsDeviceVolumeType.GP3,
+                    encrypted=True
+                )
+            ),
+            #     ec2.BlockDevice(
+            #     device_name="/dev/sdg",
+            #     volume=ec2.BlockDeviceVolume.ebs(
+            #         volume_size= config['server']['volume_size'],
+            #         volume_type= ec2.EbsDeviceVolumeType.GP3,
+            #         encrypted=True
+            #     )
+            # )                
+            ]
+        )
+        Tags.of(instance2).add("OS", "Windows")
