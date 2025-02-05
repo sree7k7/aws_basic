@@ -1,16 +1,19 @@
-from aws_cdk import (
-    # Duration,
-    Stack
-    # aws_sqs as sqs,
-)
+from aws_cdk import aws_ec2 as ec2, aws_iam as iam, aws_logs as logs, aws_elasticloadbalancingv2 as elb, Tags
+
 import aws_cdk.aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_logs as logs
 from aws_cdk import Tags, aws_ec2 as ec2
 import aws_cdk as cdk
 import aws_cdk.aws_ssm as ssm
+import aws_cdk.aws_elasticloadbalancingv2 as elb
+import aws_cdk.aws_elasticloadbalancingv2_targets as elb_targets
+
+# import listner
+from aws_cdk.aws_elasticloadbalancingv2 import ListenerAction
 
 from constructs import Construct
+from aws_cdk.aws_elasticloadbalancingv2_targets import InstanceIdTarget
 
 class AwsBasicStack(cdk.Stack):
 
@@ -173,3 +176,28 @@ class AwsBasicStack(cdk.Stack):
             ]
         )
         Tags.of(instance2).add("OS", "Windows")
+
+
+## Application load balancer
+
+       # Application Load Balancer
+        lb = elb.ApplicationLoadBalancer(
+            self, "LB",
+            vpc=vpcx,
+            internet_facing=True,
+            security_group=sg
+        )
+        
+        # # Listener and target group
+        listener = lb.add_listener("Listener", port=80)
+        listener.add_targets(
+            "Target",
+            port=80,
+            targets=[elb_targets.InstanceIdTarget(instance.instance_id), elb_targets.InstanceIdTarget(instance2.instance_id)],
+            health_check=elb.HealthCheck(
+                path="/",
+                interval=cdk.Duration.seconds(60),
+                timeout=cdk.Duration.seconds(5)                
+            )
+        )
+        lb.connections.allow_from_any_ipv4(ec2.Port.tcp(80), "Internet access to ALB")
