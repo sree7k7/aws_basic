@@ -4,10 +4,11 @@ import os
 import aws_cdk as cdk
 
 from aws_basic.aws_basic_stack import AwsBasicStack
+from aws_basic.ecs_cluster import EcsCluster
 
 
 app = cdk.App()
-AwsBasicStack(app, "AwsBasicStack",
+basic_stack = AwsBasicStack(app, "AwsBasicStack",
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
     # but a single synthesized template can be deployed anywhere.
@@ -24,5 +25,6 @@ AwsBasicStack(app, "AwsBasicStack",
 
     # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
     )
+# esc = EcsCluster(app, "EcsClusterStack", vpcid=basic_stack.vpcid.value)
 
 app.synth()
