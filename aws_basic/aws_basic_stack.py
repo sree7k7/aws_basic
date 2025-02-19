@@ -65,17 +65,11 @@ class AwsBasicStack(cdk.Stack):
             ec2.Port.tcp(22),
             "Allow ssh access from the world"
         )
-        sg.add_ingress_rule(
-            ec2.Peer.any_ipv4(),
-            ec2.Port.tcp(80),
-            "Allow http access from the world"
-        )
-        sg.add_ingress_rule(
-            ec2.Peer.any_ipv4(),
-            ec2.Port.tcp(443),
-            "Allow https access from the world"
-        )
-        
+        ## give access to alb security group: sg-02865b5280c4a65ba
+        # custom tcp with security group
+
+                          
+               
         ## icmp traffic
         sg.add_ingress_rule(
             ec2.Peer.any_ipv4(),
@@ -114,15 +108,13 @@ class AwsBasicStack(cdk.Stack):
         #     parameter_name="/dnac/user/passwd"
         # ).string_value
         #######################user data############
-        user_data = f'''
+        user_data = '''
             #!/bin/bash      
-            yum update -y
+            sudo yum update -y
             sudo yum install -y httpd
             sudo systemctl start httpd
             sudo systemctl enable httpd
             sudo echo "<h1> Hello from $(hostname -f)</h1>" > /var/www/html/index.html
-            
-            # rm /var/lib/cloud/instance/sem/config_scripts_user
             '''
         
         ### Linux instance 1
