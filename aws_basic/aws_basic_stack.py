@@ -55,6 +55,7 @@ class AwsBasicStack(cdk.Stack):
         # sg
         sg = ec2.SecurityGroup(self, "SecurityGroup",
             vpc=self.vpc,
+            security_group_name="EC2SecurityGroup",
             description="Allow ssh access to ec2 instances",
             allow_all_outbound=True
         )
@@ -65,11 +66,13 @@ class AwsBasicStack(cdk.Stack):
             ec2.Port.tcp(22),
             "Allow ssh access from the world"
         )
-        ## give access to alb security group: sg-02865b5280c4a65ba
-        # custom tcp with security group
-
-                          
-               
+        
+        sg.add_ingress_rule(
+            ec2.Peer.any_ipv4(),
+            ec2.Port.tcp(80),
+            "Allow http access from the world"
+        )
+                       
         ## icmp traffic
         sg.add_ingress_rule(
             ec2.Peer.any_ipv4(),
@@ -108,31 +111,33 @@ class AwsBasicStack(cdk.Stack):
         #     parameter_name="/dnac/user/passwd"
         # ).string_value
         #######################user data############
-        user_data = '''
-            #!/bin/bash      
-            sudo yum update -y
-            sudo yum install -y httpd
-            sudo systemctl start httpd
-            sudo systemctl enable httpd
-            sudo echo "<h1> Hello from $(hostname -f)</h1>" > /var/www/html/index.html
-            '''
+        user_data_script = '''
+        sudo yum update -y           
+        sudo yum install -y httpd
+        sudo systemctl start httpd
+        sudo systemctl enable httpd
+        sudo echo "<h1> Hello from $(hostname -f)</h1>" > /var/www/html/index.html 
+        rm /var/lib/cloud/instance/sem/config_scripts_user
+        '''
+        
+        user_data = ec2.UserData.for_linux()
+        user_data.add_commands(user_data_script)
         
         ### Linux instance 1
         self.instances = []
-        for i in range(1):
+        for i in range(2):
             instance = ec2.Instance(
                 self,
                 f'BackupInstance{i}',
-                instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE4_GRAVITON, ec2.InstanceSize.MICRO),
+                instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3_AMD, ec2.InstanceSize.SMALL),
                 vpc=self.vpc,
                 machine_image=ec2.MachineImage.latest_amazon_linux2023(
-                    cpu_type=ec2.AmazonLinuxCpuType.ARM_64,
                     edition=ec2.AmazonLinuxEdition.STANDARD,
                 ),
-                credit_specification=ec2.CpuCredits.STANDARD,
                 security_group=sg,
                 role=role,
-                user_data=ec2.UserData.custom(user_data),
+                user_data=user_data,
+                user_data_causes_replacement=True,
                 vpc_subnets=ec2.SubnetSelection(
                     subnet_type=ec2.SubnetType.PUBLIC
                 ),

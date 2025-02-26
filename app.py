@@ -10,6 +10,6 @@ app = cdk.App()
 basic_stack = AwsBasicStack(app, "AwsBasicStack")
 
 # Use the first instance from the list
-alb = AlbStack(app, "AlbStack", vpc=basic_stack.vpc, instance=basic_stack.instances[0])
+alb = AlbStack(app, "AlbStack", vpc=basic_stack.vpc, instances=basic_stack.instances)
 
 app.synth()

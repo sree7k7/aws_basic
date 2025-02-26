@@ -6,7 +6,7 @@ import aws_cdk.aws_elasticloadbalancingv2_targets as elb_targets
 
 class AlbStack(cdk.Stack):
     
-    def __init__(self, scope: Construct, construct_id: str, vpc, instance, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, vpc, instances, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # Create an Application Load Balancer
@@ -26,7 +26,9 @@ class AlbStack(cdk.Stack):
         listener = alb.add_listener("Listener", port=80)
 
         # Add a target group
-        target_group = listener.add_targets("alb", port=80, targets=[elb_targets.InstanceIdTarget(instance.instance_id)])
+        targets = [elb_targets.InstanceIdTarget(instance.instance_id) for instance in instances]
+        target_group = listener.add_targets("alb", port=80, targets=targets)
+        # target_group = listener.add_targets("alb", port=80, targets=[elb_targets.InstanceIdTarget(instance.instance_id)])
         
         # Allow inbound traffic from ALB to EC2 instance on port 80
         # instance.connections.allow_from(alb, ec2.Port.tcp(80), "Allow HTTP traffic from ALB")
