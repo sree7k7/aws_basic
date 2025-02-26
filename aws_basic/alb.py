@@ -27,15 +27,12 @@ class AlbStack(cdk.Stack):
 
         # Add a target group
         targets = [elb_targets.InstanceIdTarget(instance.instance_id) for instance in instances]
-        target_group = listener.add_targets("alb", port=80, targets=targets)
+        target_group = listener.add_targets(
+            "alb", port=80, 
+            targets=targets,
+            stickiness_cookie_duration=cdk.Duration.seconds(60),
+            )
         # target_group = listener.add_targets("alb", port=80, targets=[elb_targets.InstanceIdTarget(instance.instance_id)])
-        
-        # Allow inbound traffic from ALB to EC2 instance on port 80
-        # instance.connections.allow_from(alb, ec2.Port.tcp(80), "Allow HTTP traffic from ALB")
-        # instance.connections.allow_from(alb, ec2.Port.tcp(80), "Allow HTTP traffic from ALB")
-        
-        # # Allow inbound traffic from ALB to EC2 instance on port 443
-        # instance.connections.allow_from(alb, ec2.Port.tcp(443), "Allow HTTPS traffic from ALB")
-        
+                
         # Output ALB DNS name
         cdk.CfnOutput(self, "AlbDnsName", value=alb.load_balancer_dns_name)
