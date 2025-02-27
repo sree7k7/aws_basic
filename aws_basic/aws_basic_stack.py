@@ -125,7 +125,7 @@ class AwsBasicStack(cdk.Stack):
         
         ### Linux instance 1
         self.instances = []
-        for i in range(2):
+        for i in range(1):
             instance = ec2.Instance(
                 self,
                 f'BackupInstance{i}',
@@ -137,9 +137,6 @@ class AwsBasicStack(cdk.Stack):
                 security_group=sg,
                 role=role,
                 user_data=user_data,
-                # maintenance_options=ec2.InstanceMaintenanceOptions(
-                # auto_recovery=ec2.InstanceAutoRecovery.DEFAULT
-                #         ),
                 user_data_causes_replacement=True,
                 vpc_subnets=ec2.SubnetSelection(
                     subnet_type=ec2.SubnetType.PUBLIC
@@ -164,7 +161,7 @@ class AwsBasicStack(cdk.Stack):
                 ]
             )
             self.instances.append(instance)
-            # Tags.of(self.instance).add("OS", "Linux")
+            # Tags.of(self.instances).add("OS", "Linux")
             # Tags.of(self).add("AppManagerCFNStackKey", "")
           
         # ## windows instance 2
