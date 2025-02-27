@@ -137,6 +137,9 @@ class AwsBasicStack(cdk.Stack):
                 security_group=sg,
                 role=role,
                 user_data=user_data,
+                # maintenance_options=ec2.InstanceMaintenanceOptions(
+                # auto_recovery=ec2.InstanceAutoRecovery.DEFAULT
+                #         ),
                 user_data_causes_replacement=True,
                 vpc_subnets=ec2.SubnetSelection(
                     subnet_type=ec2.SubnetType.PUBLIC

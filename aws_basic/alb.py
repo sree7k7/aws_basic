@@ -19,7 +19,6 @@ class AlbStack(cdk.Stack):
                 vpc=vpc,
                 allow_all_outbound=True
             )
-            
         )
 
         # Add a listener
@@ -32,7 +31,6 @@ class AlbStack(cdk.Stack):
             targets=targets,
             stickiness_cookie_duration=cdk.Duration.seconds(60),
             )
-        # target_group = listener.add_targets("alb", port=80, targets=[elb_targets.InstanceIdTarget(instance.instance_id)])
                 
         # Output ALB DNS name
         cdk.CfnOutput(self, "AlbDnsName", value=alb.load_balancer_dns_name)
