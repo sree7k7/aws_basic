@@ -125,7 +125,7 @@ class AwsBasicStack(cdk.Stack):
         
         ### Linux instance 1
         self.instances = []
-        for i in range(1):
+        for i in range(0):
             instance = ec2.Instance(
                 self,
                 f'BackupInstance{i}',

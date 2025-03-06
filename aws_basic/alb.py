@@ -3,6 +3,7 @@ from aws_cdk import aws_elasticloadbalancingv2 as elbv2
 import aws_cdk as cdk
 from constructs import Construct
 import aws_cdk.aws_elasticloadbalancingv2_targets as elb_targets
+from aws_cdk import aws_autoscaling as autoscaling
 
 class AlbStack(cdk.Stack):
     
@@ -17,15 +18,75 @@ class AlbStack(cdk.Stack):
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             security_group=ec2.SecurityGroup(self, "AlbSecurityGroup",
                 vpc=vpc,
-                allow_all_outbound=True
+                allow_all_outbound=True,
+                security_group_name="alb-security-group"
             )
+        )
+
+
+## AutoScalingGroup
+
+        # asg_template = ec2.LaunchTemplate(self, "MyLaunchTemplate",
+        #     instance_type=ec2.InstanceType.of(
+        #         ec2.InstanceClass.BURSTABLE2, ec2.InstanceSize.MICRO
+        #     ),
+        #     machine_image=ec2.MachineImage.latest_amazon_linux2023(
+        #             edition=ec2.AmazonLinuxEdition.STANDARD,
+        #         ),
+        #     block_devices=[
+        #             ec2.BlockDevice(
+        #             device_name="/dev/xvda",
+        #             volume=ec2.BlockDeviceVolume.ebs(
+        #                 volume_size= 20,
+        #                 volume_type= ec2.EbsDeviceVolumeType.GP3,
+        #                 encrypted=True
+        #             )
+        #         )               
+        #     ]
+        # )
+        
+        # # Create an AutoScalingGroup
+        asg = autoscaling.AutoScalingGroup(self, "MyAsg",
+            vpc=vpc,
+            instance_type=ec2.InstanceType.of(
+                ec2.InstanceClass.BURSTABLE2, ec2.InstanceSize.MICRO
+            ),
+            machine_image=ec2.MachineImage.latest_amazon_linux2023(
+                    edition=ec2.AmazonLinuxEdition.STANDARD,
+                ),
+            min_capacity=1,
+            max_capacity=6,
+            desired_capacity=1,
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
+            associate_public_ip_address=True,
+            user_data=ec2.UserData.custom(
+                "#!/bin/bash\nyum install -y httpd\nsystemctl start httpd\nsystemctl enable httpd\necho 'Hello, World!' > /var/www/html/index.html"
+            ),
+            block_devices=[autoscaling.BlockDevice(
+                device_name="/dev/xvda",
+                volume=autoscaling.BlockDeviceVolume.ebs(
+                    volume_size=10,
+                    volume_type=autoscaling.EbsDeviceVolumeType.GP3,
+                    throughput=125
+            )
+            )
+        ],
+            ## automatic scaling
+            cooldown=cdk.Duration.seconds(60),
+            health_check=autoscaling.HealthCheck.ec2(grace=cdk.Duration.seconds(300)),
+            update_policy=autoscaling.UpdatePolicy.rolling_update(
+                pause_time=cdk.Duration.seconds(300),
+                min_instances_in_service=1
+            )
+            
         )
 
         # Add a listener
         listener = alb.add_listener("Listener", port=80)
 
         # Add a target group
-        targets = [elb_targets.InstanceIdTarget(instance.instance_id) for instance in instances]
+        # targets = [elb_targets.InstanceIdTarget(instance.instance_id) for instance in instances]
+        targets = [asg]
         target_group = listener.add_targets(
             "alb", port=80, 
             targets=targets,
@@ -34,3 +95,4 @@ class AlbStack(cdk.Stack):
                 
         # Output ALB DNS name
         cdk.CfnOutput(self, "AlbDnsName", value=alb.load_balancer_dns_name)
+        
