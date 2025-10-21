@@ -44,7 +44,16 @@ class AlbStack(cdk.Stack):
         #         )               
         #     ]
         # )
-        
+        user_data_script = '''
+        sudo yum update -y           
+        sudo yum install -y httpd
+        sudo systemctl start httpd
+        sudo systemctl enable httpd
+        sudo echo "<h1> Hello from $(hostname -f)</h1>" > /var/www/html/index.html 
+        rm /var/lib/cloud/instance/sem/config_scripts_user
+        '''
+        user_data = ec2.UserData.for_linux()
+        user_data.add_commands(user_data_script)
         # # Create an AutoScalingGroup
         asg = autoscaling.AutoScalingGroup(self, "MyAsg",
             vpc=vpc,
@@ -59,9 +68,10 @@ class AlbStack(cdk.Stack):
             desired_capacity=1,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             associate_public_ip_address=True,
-            user_data=ec2.UserData.custom(
-                "#!/bin/bash\nyum install -y httpd\nsystemctl start httpd\nsystemctl enable httpd\necho 'Hello, World!' > /var/www/html/index.html"
-            ),
+            # user_data=ec2.UserData.custom(
+            #     "#!/bin/bash\nyum install -y httpd\nsystemctl start httpd\nsystemctl enable httpd\necho 'Hello, World!' > /var/www/html/index.html"
+            # ),
+            user_data=user_data,
             block_devices=[autoscaling.BlockDevice(
                 device_name="/dev/xvda",
                 volume=autoscaling.BlockDeviceVolume.ebs(

@@ -8,8 +8,7 @@ from aws_basic.alb import AlbStack
 
 app = cdk.App()
 basic_stack = AwsBasicStack(app, "AwsBasicStack")
+# alb = AlbStack(app, "AlbStack", vpc=basic_stack.vpc, instances=basic_stack.instances)
 
-# Use the first instance from the list
-alb = AlbStack(app, "AlbStack", vpc=basic_stack.vpc, instances=basic_stack.instances)
 
 app.synth()

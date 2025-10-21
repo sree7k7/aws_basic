@@ -11,4 +11,8 @@ class ElasticBeanStalk(cdk.Stack):
         super().__init__(scope, construct_id, **kwargs)
         
         ## create a elastic load balancer
+        lb = elbv2.ApplicationLoadBalancer(self, "LB",
+            vpc=vpc,
+            internet_facing=True
+        )
         
