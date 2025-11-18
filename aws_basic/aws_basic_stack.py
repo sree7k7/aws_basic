@@ -20,7 +20,7 @@ from aws_cdk.aws_elasticloadbalancingv2 import ListenerAction
 from constructs import Construct
 from aws_cdk import CfnOutput
 
-class AwsBasicStack(cdk.Stack):
+class AwsBasicStac(cdk.Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -125,7 +125,7 @@ class AwsBasicStack(cdk.Stack):
         
         ### Linux instance 1
         self.instances = []
-        for i in range(0):
+        for i in range(2): ## create 2 instances
             instance = ec2.Instance(
                 self,
                 f'BackupInstance{i}',
