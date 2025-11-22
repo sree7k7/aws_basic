@@ -112,11 +112,21 @@ class AwsBasicStac(cdk.Stack):
         # ).string_value
         #######################user data############
         user_data_script = '''
-        sudo yum update -y           
-        sudo yum install -y httpd
-        sudo systemctl start httpd
-        sudo systemctl enable httpd
-        sudo echo "<h1> Hello from $(hostname -f)</h1>" > /var/www/html/index.html 
+        #!/bin/bash
+        yum update -y
+        yum install s-tui -y
+        yum install -y httpd
+        systemctl start httpd
+        systemctl enable httpd
+        echo "<h1>Hello from $(hostname -f)</h1>" > /var/www/html/index.html
+        
+        # Create a user for serial console access and set a password
+        # In a production environment, use a more secure method like AWS Secrets Manager
+        useradd consoleuser
+        echo "consoleuser:YourSecureassword123!" | chpasswd
+        # Add consoleuser to the 'wheel' group to grant sudo privileges
+        usermod -aG wheel consoleuser
+        
         rm /var/lib/cloud/instance/sem/config_scripts_user
         '''
         
@@ -125,7 +135,7 @@ class AwsBasicStac(cdk.Stack):
         
         ### Linux instance 1
         self.instances = []
-        for i in range(2): ## create 2 instances
+        for i in range(1): ## create 2 instances
             instance = ec2.Instance(
                 self,
                 f'BackupInstance{i}',
